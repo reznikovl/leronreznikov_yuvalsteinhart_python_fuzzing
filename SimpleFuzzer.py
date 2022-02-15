@@ -1,6 +1,6 @@
 import builtins as b
 import pprint
-from utils import simple_func, types, type_combos
+from utils import simple_func, custom_types, type_combos
 # from utils import builtin_types
 
 class SimpleFuzzer:
@@ -9,10 +9,11 @@ class SimpleFuzzer:
 
     def fuzz_single_param(self, func):
         allowed_types = set()
-        for i in types():
+        for i in custom_types():
             try:
-                func(i())
-                allowed_types.add(i)
+                test_wrapper = i()
+                func(test_wrapper.getVal())
+                allowed_types.add(test_wrapper.actualType())
             except TypeError:
                 continue
         return allowed_types
@@ -21,7 +22,7 @@ class SimpleFuzzer:
         allowed_types = set()
         for i in type_combos(n):
             try:
-                func(*i[0])
+                func(*[i.getVal() for i in i[0]])
                 allowed_types.add(i[1])
             except TypeError:
                 continue
@@ -33,7 +34,7 @@ class SimpleFuzzer:
         # At every point, depending on where the error is, change the variable
         
         allowed_types = set()
-        for i in types():
+        for i in custom_types():
             try:
                 func(i())
                 allowed_types.add(i)
