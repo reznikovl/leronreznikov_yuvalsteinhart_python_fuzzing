@@ -14,8 +14,8 @@ class BaseType:
         return self.val
     def __repr__(self):
         return str(self.val)
-    def actualType(self):
-        return type(self.val)
+    def get_type(self):
+        return type(self.val).__name__
 
 class Int(BaseType):
     def generate(self):
