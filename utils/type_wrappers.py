@@ -15,56 +15,56 @@ class BaseType:
     def __repr__(self):
         return str(self.val)
     def get_type(self):
-        return type(self.val).__name__
+        return type(self.val).__name__.capitalize()
 
-class Int(BaseType):
+class Int(BaseType, int):
     def generate(self):
         self.val = random.randint(-2 ** 31, 2 ** 31)
 
-class Float(BaseType):
+class Float(BaseType, float):
     def generate(self):
         self.val = random.random() * random.randint(-1000, 1000)
 
-class Bool(BaseType):
+class Bool(BaseType, int):
     def generate(self):
         if (random.random()) > .5:
             self.val = True
         else:
             self.val = False
 
-class Bytes(BaseType):
+class Bytes(BaseType, bytes):
     def generate(self):
         self.val = random.randbytes(random.randint(1, 100))
 
-class Str(BaseType):
+class Str(BaseType, str):
     def generate(self):
         possibilities = string.ascii_letters + string.digits + string.punctuation
         self.val = ''.join(random.choice(possibilities) for _ in range(random.randint(0, 100)))
 
-class Complex(BaseType):
+class Complex(BaseType, complex):
     def generate(self):
         self.val = complex(Float().getVal(), Float().getVal())
 
-class List(BaseType):
+class List(BaseType, list):
     def generate(self):
         self.val = []
         for _ in range(random.randint(0, 10)):
             self.val.append(generateRandomObject())
 
-class Dict(BaseType):
+class Dict(BaseType, dict):
     def generate(self):
         self.val = {}
         for _ in range(random.randint(0, 10)):
             self.val[generateRandomObject()] = generateRandomObject()
 
-class Tuple(BaseType):
+class Tuple(BaseType, tuple):
     def generate(self):
         self.val = tuple(List().getVal())
 
-class Set(BaseType):
+class Set(BaseType, set):
     def generate(self):
         self.val = set(List().getVal())
 
-class FrozenSet(BaseType):
+class Frozenset(BaseType, frozenset):
     def generate(self):
         self.val = frozenset(List().getVal())

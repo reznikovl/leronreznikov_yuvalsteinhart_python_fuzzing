@@ -11,7 +11,7 @@ def types():
     return set([int, float, bool, list, bytes, str, dict, set, frozenset, complex, tuple])
 
 def custom_types():
-    return [Int, Float, Bool, Bytes, Str, Complex, List, Dict, Tuple, Set, FrozenSet]
+    return [Int, Float, Bool, Bytes, Str, Complex, List, Dict, Tuple, Set, Frozenset]
 
 def type_combos(n):
     out = []

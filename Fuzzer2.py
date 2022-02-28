@@ -20,22 +20,26 @@ class Fuzzer2:
         params = [None] * n
 
         failed_types = set()
+
+        #pick random attempts for params
         for i in range(n):
             params[i] = random.choice(custom_types())()
         for i in range(num_trials):
             print(list(map(lambda x: x.get_type(), params)))
             try:
-                func(*tuple(i.getVal() for i in params))
+                # Try to pass in 
+                func(*params)
                 allowed_types.add(tuple(x.get_type() for x in params))
             except (TypeError, AttributeError) as error:
                 print(error)
                 failed_types.add(tuple(x.get_type() for x in params))
-                match = re.findall("str|bool|int|float|bytes|complex|list|dict|tuple|set|frozenset", str(error))
+                match = re.findall("Str|Bool|Int|Float|Bytes|Complex|List|Dict|Tuple|Set|Frozenset|str|bool|int|float|bytes|complex|list|dict|tuple|set|frozenset", str(error))
+                match = [m.capitalize() for m in match]
                 while True:
                     type = random.choice(match)
                     matching_params = list()                    
                     for i in range(len(params)):
-                        if str(params[i].get_type()) == type:
+                        if (params[i].get_type()) == type:
                             matching_params.append(i)
                     if len(matching_params) > 0:
                         break
