@@ -2,8 +2,8 @@ import random
 import string
 
 def generateRandomObject():
-    possibilites = [Int, Float, Bool, Bytes, Str, Complex]
-    return random.choice(possibilites)()
+    possibilities = [Int, Float, Bool, Bytes, Str, Complex]
+    return random.choice(possibilities)()
 
 class BaseType:
     def __init__(self):
@@ -39,7 +39,7 @@ class Bytes(BaseType, bytes):
 class Str(BaseType, str):
     def generate(self):
         possibilities = string.ascii_letters + string.digits + string.punctuation
-        self.val = ''.join(random.choice(possibilities) for _ in range(random.randint(0, 100)))
+        self.val = ''.join(random.choice(possibilities) for _ in range(random.randint(1, 100)))
 
 class Complex(BaseType, complex):
     def generate(self):
@@ -48,13 +48,13 @@ class Complex(BaseType, complex):
 class List(BaseType, list):
     def generate(self):
         self.val = []
-        for _ in range(random.randint(0, 10)):
+        for _ in range(random.randint(1, 10)):
             self.val.append(generateRandomObject())
 
 class Dict(BaseType, dict):
     def generate(self):
         self.val = {}
-        for _ in range(random.randint(0, 10)):
+        for _ in range(random.randint(1, 10)):
             self.val[generateRandomObject()] = generateRandomObject()
 
 class Tuple(BaseType, tuple):
