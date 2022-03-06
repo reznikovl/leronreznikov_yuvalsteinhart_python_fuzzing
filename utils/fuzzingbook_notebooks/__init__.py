@@ -1,1 +1,1 @@
-from ControlFlow import gen_cfg, to_graph
+from fuzzingbook.ControlFlow import gen_cfg, to_graph

@@ -1,7 +1,7 @@
 from .type_wrappers import *
 from .test_cases import *
 import builtins as b
-from .fuzzingbook_notebooks.ControlFlow import gen_cfg, to_graph
+from .fuzzingbook_notebooks import *
 
 def builtin_types():
     return [t

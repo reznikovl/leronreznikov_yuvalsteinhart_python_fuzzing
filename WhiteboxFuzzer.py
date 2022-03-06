@@ -2,10 +2,9 @@
 # from pycallgraph3 import Config
 # from pycallgraph3 import GlobbingFilter
 # from pycallgraph3.output import GraphvizOutput
-# from utils import gen_cfg, to_graph
+from utils import gen_cfg, to_graph
 from graphviz import Source, Digraph
 import inspect
-# from fuzzingbook_notebooks.ControlFlow import gen_cfg. to_graph
 
 
 class WhiteBoxFuzzer:
