@@ -3,7 +3,7 @@
 # from pycallgraph3 import GlobbingFilter
 # from pycallgraph3.output import GraphvizOutput
 from FuzzerBase import FuzzerBase
-from utils import gen_cfg, to_graph, complex_1, rich_output, showast
+from utils import gen_cfg, to_graph, complex_1, rich_output
 from graphviz import Source, Digraph
 import inspect
 import ast
@@ -25,15 +25,15 @@ class WhiteBoxFuzzer(FuzzerBase):
         to_graph(cfg)
     
     def fuzz(self):
-        sig = inspect.signature(self.func)
+        sig = inspect.signature(self.function_)
         n = len(sig.parameters)
         param_names = sig.parameters.keys()
         param_constraints = dict()
         for i in param_names:
             param_constraints[i] = []
-        src = inspect.getsource(self.func)
-        func_ast = ast.parse(src)
-        showast.show_ast(func_ast)
+        src = inspect.getsource(self.function_)
+        print(ast.dump(ast.parse(src)))
+        
         
 
 
