@@ -1,10 +1,10 @@
 from time import time
 import matplotlib.pyplot as plt
 class FuzzerBase():
-    def __init__(self, name):
-        """Passing in string ClassName for name will use the class name for the fuzzer. Otherwise, it will use the custom name"""
+    def __init__(self, name = ""):
+        """Passing in empty string for name will use the class name for the fuzzer. Otherwise, it will use the custom name"""
 
-        if name == "ClassName":
+        if name == "":
             self.fuzzer_name = type(self).__name__
         else:
             self.fuzzer_name = name

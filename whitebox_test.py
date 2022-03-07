@@ -4,4 +4,5 @@ from utils.type_wrappers import *
 from WhiteboxFuzzer import WhiteBoxFuzzer
 
 
-WhiteBoxFuzzer(complex_3).call_graph()
+# WhiteBoxFuzzer(complex_3).call_graph()
+WhiteBoxFuzzer(complex_1).fuzz()

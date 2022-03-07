@@ -8,7 +8,7 @@ import time
 class SimpleFuzzer(FuzzerBase):
     """A simple, not-very-intelligent fuzzer. It randomly tries different combinations of types, records the ones that work, and returns those."""
 
-    def __init__(self, name = 'ClassName'):
+    def __init__(self, name = ''):
         """Can set a custom name for the fuzzer, or use class name by default."""
         super().__init__(name)
 
