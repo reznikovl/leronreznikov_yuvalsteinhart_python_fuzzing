@@ -8,7 +8,7 @@ from graphviz import Source, Digraph
 import inspect
 import ast
 
-
+param_constraints = dict()
 
 class WhiteBoxFuzzer(FuzzerBase):
 
@@ -28,15 +28,61 @@ class WhiteBoxFuzzer(FuzzerBase):
         sig = inspect.signature(self.function_)
         n = len(sig.parameters)
         param_names = sig.parameters.keys()
+        global param_constraints
         param_constraints = dict()
         for i in param_names:
             param_constraints[i] = []
         src = inspect.getsource(self.function_)
+        func_ast = ast.parse(src)
         print(ast.dump(ast.parse(src)))
         
         
+        
 
+class visitor(ast.NodeVisitor):
+    def visit_Attribute(self, node: Attribute) -> Any:
+        param = node.Name
+        if param in param_constraints:
+            param_constraints[param].append(node.attr)
+        return super().visit_Attribute(node)
 
+    def visit_BinOp(self, node: BinOp) -> Any:
+        
+        return super().visit_BinOp(node)
+
+    def visit_BoolOp(self, node: BoolOp) -> Any:
+        return super().visit_BoolOp(node)
+    
+    def visit_Call(self, node: Call) -> Any:
+        return super().visit_Call(node)
+    
+    def visit_Compare(self, node: Compare) -> Any:
+        return super().visit_Compare(node)
+
+    def visit_Constant(self, node: Constant) -> Any:
+        return super().visit_Constant(node)
+    
+    def visit_ListComp(self, node: ListComp) -> Any:
+        return super().visit_ListComp(node)
+                    
+    def visit_Set(self, node: Set) -> Any:
+        return super().visit_Set(node)
+    
+    def visit_SetComp(self, node: SetComp) -> Any:
+        return super().visit_SetComp(node)
+    
+    def visit_Slice(self, node: Slice) -> Any:
+        return super().visit_Slice(node)
+        
+    def visit_Subscript(self, node: Subscript) -> Any:
+        return super().visit_Subscript(node)
+    
+    def visit_Tuple(self, node: Tuple) -> Any:
+        return super().visit_Tuple(node)
+    
+    def visit_UnaryOp(self, node: UnaryOp) -> Any:
+        return super().visit_UnaryOp(node)
+    
 # def token_to_magic(tok):
 #     tokenizer = {
 #         '+': '__add__',
