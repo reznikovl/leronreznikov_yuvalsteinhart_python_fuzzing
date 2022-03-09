@@ -47,13 +47,30 @@ class visitor(ast.NodeVisitor):
         return super().visit_Attribute(node)
 
     def visit_BinOp(self, node: BinOp) -> Any:
-        
+        try:
+            param = node.left.Name
+            if param in param_constraints:
+                param_constraints[param].append(node.op)
+        except:
+            pass
         return super().visit_BinOp(node)
 
     def visit_BoolOp(self, node: BoolOp) -> Any:
+        try:
+            param = node.left.Name
+            if param in param_constraints:
+                param_constraints[param].append(node.op)
+        except:
+            pass
         return super().visit_BoolOp(node)
     
     def visit_Call(self, node: Call) -> Any:
+        try:
+            param = node.args[0].Name
+            if param in param_constraints:
+                param_constraints[param].append(node.func.Name)
+        except:
+            pass
         return super().visit_Call(node)
     
     def visit_Compare(self, node: Compare) -> Any:
