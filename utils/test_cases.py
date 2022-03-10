@@ -2,6 +2,7 @@ def simple_func(x):
     return x - 1
 
 def simple_multi_param(a, x):
+    x *= 2
     return a[x]
 
 def four_params(a, b, c, d):
@@ -12,6 +13,9 @@ def four_params(a, b, c, d):
 def complex_1(a, b, c, d, e):
     e += a + b
     c.add(10)
+    c = 1
+    
+    c *= 2
     d -= e
     return d
 

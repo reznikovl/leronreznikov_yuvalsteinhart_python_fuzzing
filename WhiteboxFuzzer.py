@@ -3,102 +3,246 @@
 # from pycallgraph3 import GlobbingFilter
 # from pycallgraph3.output import GraphvizOutput
 from FuzzerBase import FuzzerBase
-from utils import gen_cfg, to_graph, complex_1, rich_output
+from utils import gen_cfg, to_graph, complex_1, rich_output, custom_types, types
 from graphviz import Source, Digraph
 import inspect
 import ast
+from ast import *
+from typing import *
+import random
 
 param_constraints = dict()
+out_of_consideration = set()
 
 class WhiteBoxFuzzer(FuzzerBase):
 
     def __init__(self, func, name = ""):
         self.function_ = func
 
-    def call_graph(
-        self,
-        # output_png="call_graph_png",
-        # custom_include=None
-
-    ):
+    def call_graph(self):
         cfg = gen_cfg(inspect.getsource(self.function_))
         to_graph(cfg)
     
-    def fuzz(self):
+    def fuzz(self, max_trials=100):
         sig = inspect.signature(self.function_)
         n = len(sig.parameters)
         param_names = sig.parameters.keys()
         global param_constraints
+        global out_of_consideration
         param_constraints = dict()
+        out_of_consideration = set()
         for i in param_names:
             param_constraints[i] = []
         src = inspect.getsource(self.function_)
         func_ast = ast.parse(src)
-        print(ast.dump(ast.parse(src)))
+        print(ast.dump(func_ast))
+
+        visitor().visit(func_ast)
+
+        # Need to ensure particular type combo actually works
+        result = {}
+        for param, constraints in param_constraints.items():
+            result[param] = []
+            for curr_type in custom_types():
+                if all([constraint in dir(curr_type) for constraint in constraints]):
+                    result[param].append(curr_type)
+            if not result[param]:
+                #No default type has requirements
+                result[param] = constraints
+        print(result)
+        attempted_combos = set()
+        inp = [random.choice(result[i]) for i in sig.parameters]
+        for i in range(max_trials):
+            try:
+                if inp in attempted_combos:
+                    inp = tuple([random.choice(result[i]) for i in sig.parameters])
+                    continue
+                self.function_(*(j() for j in inp))
+                return inp
+            except (TypeError, AttributeError):
+                attempted_combos.add(tuple(inp))
+                inp = tuple([random.choice(result[i]) for i in sig.parameters])
+            except:
+                return inp
+
         
         
         
 
 class visitor(ast.NodeVisitor):
     def visit_Attribute(self, node: Attribute) -> Any:
-        param = node.Name
-        if param in param_constraints:
+        param = node.value.id
+        if param in param_constraints and param not in out_of_consideration:
             param_constraints[param].append(node.attr)
-        return super().visit_Attribute(node)
+        return super().generic_visit(node)
 
     def visit_BinOp(self, node: BinOp) -> Any:
         try:
-            param = node.left.Name
-            if param in param_constraints:
-                param_constraints[param].append(node.op)
+            param = node.left.id
+            if param in param_constraints and param not in out_of_consideration:
+                param_constraints[param].append(binop_tostr(node.op))
         except:
             pass
-        return super().visit_BinOp(node)
+        return super().generic_visit(node)
 
     def visit_BoolOp(self, node: BoolOp) -> Any:
         try:
-            param = node.left.Name
-            if param in param_constraints:
-                param_constraints[param].append(node.op)
+            param = node.left.id
+            if param in param_constraints and param not in out_of_consideration:
+                param_constraints[param].append(boolop_tostr(node.op))
         except:
             pass
-        return super().visit_BoolOp(node)
+        return super().generic_visit(node)
     
     def visit_Call(self, node: Call) -> Any:
         try:
-            param = node.args[0].Name
-            if param in param_constraints:
+            param = node.args[0].id
+            if param in param_constraints and param not in out_of_consideration:
                 param_constraints[param].append(node.func.Name)
         except:
             pass
-        return super().visit_Call(node)
+        return super().generic_visit(node)
     
     def visit_Compare(self, node: Compare) -> Any:
-        return super().visit_Compare(node)
+        try:
+            param = node.left.id
+            if param in param_constraints and param not in out_of_consideration:
+                param_constraints[param].append(compare_tostr(node.ops[0]))
+        except:
+            pass
+        try:
+            param = node.comparators[0].id
+            if param in param_constraints and param not in out_of_consideration:
+                param_constraints[param].append(compare_tostr(node.ops[0]))
+        except:
+            pass
+        return super().generic_visit(node)
 
-    def visit_Constant(self, node: Constant) -> Any:
-        return super().visit_Constant(node)
-    
     def visit_ListComp(self, node: ListComp) -> Any:
-        return super().visit_ListComp(node)
-                    
-    def visit_Set(self, node: Set) -> Any:
-        return super().visit_Set(node)
+        try:
+            param = node.iter.id
+            if param in param_constraints and param not in out_of_consideration:
+                param_constraints[param].append('__iter__')
+        except:
+            pass
+        return super().generic_visit(node)
     
-    def visit_SetComp(self, node: SetComp) -> Any:
-        return super().visit_SetComp(node)
+    def visit_comprehension(self, node: comprehension) -> Any:
+        try:
+            param = node.iter.id
+            if param in param_constraints and param not in out_of_consideration:
+                param_constraints[param].append('__iter__')
+        except:
+            pass
+        return super().generic_visit(node)
+                    
     
     def visit_Slice(self, node: Slice) -> Any:
-        return super().visit_Slice(node)
+        try:
+            param1 = node.lower.id
+            if param1 in param_constraints and param not in out_of_consideration:
+                param_constraints[param1].append("__int__")
+        except:
+            pass
+        try:
+            param2 = node.upper.id
+            if param2 in param_constraints and param not in out_of_consideration:
+                param_constraints[param2].append("__int__")
+        except:
+            pass
+        return super().generic_visit(node)
         
     def visit_Subscript(self, node: Subscript) -> Any:
-        return super().visit_Subscript(node)
-    
-    def visit_Tuple(self, node: Tuple) -> Any:
-        return super().visit_Tuple(node)
+        try:
+            param = node.value.id
+            if param in param_constraints and param not in out_of_consideration:
+                param_constraints[param].append("index")
+        except:
+            pass
+        return super().generic_visit(node)
     
     def visit_UnaryOp(self, node: UnaryOp) -> Any:
-        return super().visit_UnaryOp(node)
+        try:
+            param = node.operand.id
+            if param in param_constraints and param not in out_of_consideration:
+                param_constraints[param].append(unop_tostr(node.op))
+        except:
+            pass
+        return super().generic_visit(node)
+    
+    def visit_AugAssign(self, node: AugAssign) -> Any:
+        try:
+            param = node.target.id
+            if param in param_constraints and param not in out_of_consideration:
+                param_constraints[param].append(binop_tostr(node.op))
+        except:
+            pass
+        try:
+            param = node.value.id
+            if param in param_constraints and param not in out_of_consideration:
+                param_constraints[param].append(binop_tostr(node.op))
+        except:
+            pass
+        return super().generic_visit(node)
+
+    def visit_Assign(self, node: Assign) -> Any:
+        try:
+            param = node.targets[0].id
+            if param in param_constraints and param not in out_of_consideration:
+                out_of_consideration.add(param)
+        except:
+            pass
+        return super().generic_visit(node)
+
+
+def binop_tostr(node):
+    ops = {
+        ast.Add: "__add__",
+        ast.Sub: "__sub__",
+        ast.Mult: "__mul__",
+        ast.Div: "__div__",
+        ast.FloorDiv: "__floordiv__",
+        ast.Mod: "__mod__",
+        ast.Pow: "__pow__",
+        ast.LShift: "__lshift__",
+        ast.RShift: "__rshift__",
+        ast.BitOr: "__or__",
+        ast.BitXor: "__xor__",
+        ast.BitAnd: "__and__"
+    }
+    return ops[type(node)]
+
+def boolop_tostr(node):
+    if type(node) == ast.And:
+        return "__and__"
+    else:
+        return "__or__"
+
+def compare_tostr(node):
+    ops = {
+        ast.Eq: "__eq__",
+        ast.NotEq: "__neq__",
+        ast.Lt: "__lt__",
+        ast.LtE: "__lte__",
+        ast.Gt: "__gt__",
+        ast.GtE: "__gte__",
+        ast.Is: "__init__",
+        ast.IsNot: "__init__",
+        ast.In: "__iter__",
+        ast.NotIn: "__iter__"
+    }
+    return ops[type(node)]
+
+def unop_tostr(node):
+    ops = {
+        ast.UAdd: "__uadd__",
+        ast.USub: "__usub__",
+        ast.Not: "__not__",
+        ast.Invert: "__invert__"
+    }
+    return ops[type(node)]
+
+
     
 # def token_to_magic(tok):
 #     tokenizer = {

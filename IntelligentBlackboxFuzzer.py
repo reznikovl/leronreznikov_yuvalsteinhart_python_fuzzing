@@ -5,11 +5,19 @@ from utils import custom_types
 from inspect import signature
 import random
 import re
+import time
 
 
 class IntelligentBlackboxFuzzer(FuzzerBase):
     """A much more intelligent version of the SimpleFuzzer - it tries to fuzz types based on the TypeError message content. (Blackbox)"""
-    def fuzz(self, func, num_trials = 1000):
+    def __init__(self, name = ""):
+        super().__init__(name)
+    def fuzz(self, func, max_trials = 1000):
+        success = False
+        total_tries = 0
+        tries_until_success = 0
+        start_time = time.perf_counter()
+        curr_try = 0
         sig = signature(func)
         n = len(sig.parameters)
 
@@ -19,21 +27,23 @@ class IntelligentBlackboxFuzzer(FuzzerBase):
         #Initially, seed the parameters with random values
         params = IntelligentBlackboxFuzzer.generate_random_params(n)
         
-        for i in range(num_trials):
-            print(list(map(lambda x: x.get_type(), params)))
+        for i in range(max_trials):
             try:
                 # Try to pass in the parameters to the function
                 func(*(j.getVal() for j in params))
 
                 # If this line is reached without an error, the function ran successfully
                 allowed_types.add(tuple(x.get_type() for x in params))
+                
+                #Instrumentation
+                if not success:
+                    tries_until_success = total_tries
+                success = True
 
                 #Reseed to continue searching for types
                 params = IntelligentBlackboxFuzzer.generate_random_params(n)
 
             except (TypeError, AttributeError) as error:
-                print(error)
-                
                 # Track failed types to avoid repeating previously-seen combos
                 failed_types.add(tuple(x.get_type() for x in params))
 
@@ -49,28 +59,41 @@ class IntelligentBlackboxFuzzer(FuzzerBase):
                     for j in range(len(params)):
                         if (params[j].get_type()) == type:
                             matching_params.append(j)
+
                     if len(matching_params) > 0:
                         break
+                
+                # If no params were found, re-randomize and continue
                 if not matching_params:
                     for j in range(n):
                         params[j] = random.choice(custom_types())()
                     continue
+
+                # Try replacing the parameter an arbitrary number of times. If this continually generates combinations seen before, re-randomize and continue 
                 num_trials = 0
                 while tuple(x.get_type() for x in params) in failed_types:
                     if num_trials > 20:
                         break
                     mutant_ind = random.choice(matching_params)
                     params[mutant_ind] = random.choice(custom_types())()
-                    # print(tuple(x.get_type() for x in params))
                     num_trials += 1
-                continue
             except:
+                # If another exception is generated, assume it is some sort of unrelated error (out of bounds, etc.), and add it to the allowed types list.
                 allowed_types.add(tuple(x.get_type() for x in params))
+
+                #Instrumentation
+                if not success:
+                    tries_until_success = total_tries
+                success = True
+
                 for i in range(n):
                     params[i] = random.choice(custom_types())()
+            finally:
+                total_tries += 1
+        self.record_fuzz(success, time.perf_counter() - start_time, tries_until_success, len(allowed_types))
         return allowed_types
 
 
     @staticmethod
     def generate_random_params(n):
-        return [random.choice(custom_types()) for i in range(n)]
+        return [random.choice(custom_types())() for i in range(n)]
