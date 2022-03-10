@@ -43,23 +43,24 @@ class FuzzerBase():
     def plot_time_to_fuzz(self):
         """Plots the total time taken per fuzz attempt."""
         plt.title(self.fuzzer_name + " Time Taken Per Run")
-        plt.xlabel('Attempt')
-        plt.ylabel('Time Taken (s)')
-        plt.scatter(list(range(len(self.time_to_fuzz))), self.time_to_fuzz)
+        # plt.xlabel('Attempt')
+        # plt.ylabel('Time Taken (s)')
+        plt.boxplot(self.time_to_fuzz)
         plt.show()
 
     def plot_successful_combos(self):
         """Plots the amount of successful combos generated per run."""
         plt.title(self.fuzzer_name + " Combos Generated Per Run")
-        plt.xlabel('Attempt')
-        plt.ylabel('Successful Combinations Generated')
-        plt.scatter(list(range(len(self.successful_combo_count))), self.successful_combo_count)
+        # plt.xlabel('Attempt')
+        # plt.ylabel('Successful Combinations Generated')
+        plt.boxplot(self.successful_combo_count)
         plt.show()
 
     def plot_tries_until_success(self):
         """Plots the tries until success required per successful run."""
         plt.title(self.fuzzer_name + " Tries Until Success Per Run")
-        plt.xlabel('Successful Attempt')
-        plt.ylabel('Tries until Success')
-        plt.scatter(list(range(len(self.tries_until_success))), self.tries_until_success)
+        # plt.xlabel('Successful Attempt')
+        # plt.ylabel('Tries until Success')
+        # plt.scatter(list(range(len(self.tries_until_success))), self.tries_until_success)
+        plt.boxplot(self.tries_until_success)
         plt.show()

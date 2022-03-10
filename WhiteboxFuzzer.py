@@ -3,16 +3,18 @@
 # from pycallgraph3 import GlobbingFilter
 # from pycallgraph3.output import GraphvizOutput
 from FuzzerBase import FuzzerBase
-from utils import gen_cfg, to_graph, complex_1, rich_output, custom_types, types
+from utils import gen_cfg, to_graph, complex_1, rich_output, custom_types, type_wrappers, types
 from graphviz import Source, Digraph
 import inspect
 import ast
-from ast import *
 from typing import *
 import random
+import datetime
 
 param_constraints = dict()
 out_of_consideration = set()
+random.seed(datetime.datetime.now())
+
 
 class WhiteBoxFuzzer(FuzzerBase):
 
@@ -35,7 +37,7 @@ class WhiteBoxFuzzer(FuzzerBase):
             param_constraints[i] = []
         src = inspect.getsource(self.function_)
         func_ast = ast.parse(src)
-        print(ast.dump(func_ast))
+        # print(ast.dump(func_ast))
 
         visitor().visit(func_ast)
 
@@ -49,10 +51,12 @@ class WhiteBoxFuzzer(FuzzerBase):
             if not result[param]:
                 #No default type has requirements
                 result[param] = constraints
-        print(result)
+        # print(result)
         attempted_combos = set()
-        inp = [random.choice(result[i]) for i in sig.parameters]
+        # inp = [random.choice(result[i]) for i in sig.parameters]
+        inp = [type_wrappers.Str]
         for i in range(max_trials):
+            # print(inp)
             try:
                 if inp in attempted_combos:
                     inp = tuple([random.choice(result[i]) for i in sig.parameters])
@@ -64,19 +68,20 @@ class WhiteBoxFuzzer(FuzzerBase):
                 inp = tuple([random.choice(result[i]) for i in sig.parameters])
             except:
                 return inp
+        return None
 
         
         
         
 
 class visitor(ast.NodeVisitor):
-    def visit_Attribute(self, node: Attribute) -> Any:
+    def visit_Attribute(self, node: ast.Attribute) -> Any:
         param = node.value.id
         if param in param_constraints and param not in out_of_consideration:
             param_constraints[param].append(node.attr)
         return super().generic_visit(node)
 
-    def visit_BinOp(self, node: BinOp) -> Any:
+    def visit_BinOp(self, node: ast.BinOp) -> Any:
         try:
             param = node.left.id
             if param in param_constraints and param not in out_of_consideration:
@@ -85,7 +90,7 @@ class visitor(ast.NodeVisitor):
             pass
         return super().generic_visit(node)
 
-    def visit_BoolOp(self, node: BoolOp) -> Any:
+    def visit_BoolOp(self, node: ast.BoolOp) -> Any:
         try:
             param = node.left.id
             if param in param_constraints and param not in out_of_consideration:
@@ -94,7 +99,7 @@ class visitor(ast.NodeVisitor):
             pass
         return super().generic_visit(node)
     
-    def visit_Call(self, node: Call) -> Any:
+    def visit_Call(self, node: ast.Call) -> Any:
         try:
             param = node.args[0].id
             if param in param_constraints and param not in out_of_consideration:
@@ -103,7 +108,7 @@ class visitor(ast.NodeVisitor):
             pass
         return super().generic_visit(node)
     
-    def visit_Compare(self, node: Compare) -> Any:
+    def visit_Compare(self, node: ast.Compare) -> Any:
         try:
             param = node.left.id
             if param in param_constraints and param not in out_of_consideration:
@@ -118,7 +123,7 @@ class visitor(ast.NodeVisitor):
             pass
         return super().generic_visit(node)
 
-    def visit_ListComp(self, node: ListComp) -> Any:
+    def visit_ListComp(self, node: ast.ListComp) -> Any:
         try:
             param = node.iter.id
             if param in param_constraints and param not in out_of_consideration:
@@ -127,7 +132,7 @@ class visitor(ast.NodeVisitor):
             pass
         return super().generic_visit(node)
     
-    def visit_comprehension(self, node: comprehension) -> Any:
+    def visit_comprehension(self, node: ast.comprehension) -> Any:
         try:
             param = node.iter.id
             if param in param_constraints and param not in out_of_consideration:
@@ -137,22 +142,22 @@ class visitor(ast.NodeVisitor):
         return super().generic_visit(node)
                     
     
-    def visit_Slice(self, node: Slice) -> Any:
+    def visit_Slice(self, node: ast.Slice) -> Any:
         try:
             param1 = node.lower.id
-            if param1 in param_constraints and param not in out_of_consideration:
+            if param1 in param_constraints and param1 not in out_of_consideration:
                 param_constraints[param1].append("__int__")
         except:
             pass
         try:
             param2 = node.upper.id
-            if param2 in param_constraints and param not in out_of_consideration:
+            if param2 in param_constraints and param2 not in out_of_consideration:
                 param_constraints[param2].append("__int__")
         except:
             pass
         return super().generic_visit(node)
         
-    def visit_Subscript(self, node: Subscript) -> Any:
+    def visit_Subscript(self, node: ast.Subscript) -> Any:
         try:
             param = node.value.id
             if param in param_constraints and param not in out_of_consideration:
@@ -161,7 +166,7 @@ class visitor(ast.NodeVisitor):
             pass
         return super().generic_visit(node)
     
-    def visit_UnaryOp(self, node: UnaryOp) -> Any:
+    def visit_UnaryOp(self, node: ast.UnaryOp) -> Any:
         try:
             param = node.operand.id
             if param in param_constraints and param not in out_of_consideration:
@@ -170,7 +175,7 @@ class visitor(ast.NodeVisitor):
             pass
         return super().generic_visit(node)
     
-    def visit_AugAssign(self, node: AugAssign) -> Any:
+    def visit_AugAssign(self, node: ast.AugAssign) -> Any:
         try:
             param = node.target.id
             if param in param_constraints and param not in out_of_consideration:
@@ -185,11 +190,20 @@ class visitor(ast.NodeVisitor):
             pass
         return super().generic_visit(node)
 
-    def visit_Assign(self, node: Assign) -> Any:
+    def visit_Assign(self, node: ast.Assign) -> Any:
         try:
             param = node.targets[0].id
             if param in param_constraints and param not in out_of_consideration:
                 out_of_consideration.add(param)
+        except:
+            pass
+        return super().generic_visit(node)
+    
+    def visit_For(self, node: ast.For) -> Any:
+        try:
+            param = node.iter.id
+            if param in param_constraints and param not in out_of_consideration:
+                param_constraints[param].append("__iter__")
         except:
             pass
         return super().generic_visit(node)

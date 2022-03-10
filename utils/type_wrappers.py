@@ -1,9 +1,11 @@
 import random
 import string
 
-def generateRandomObject():
+from pandas import value_counts
+
+def generateRandomType():
     possibilities = [Int, Float, Bool, Bytes, Str, Complex]
-    return random.choice(possibilities)()
+    return random.choice(possibilities)
 
 class BaseType:
     def __init__(self):
@@ -48,14 +50,17 @@ class Complex(BaseType, complex):
 class List(BaseType, list):
     def generate(self):
         self.val = []
+        data_type = generateRandomType()
         for _ in range(random.randint(1, 10)):
-            self.val.append(generateRandomObject())
+            self.val.append(data_type())
 
 class Dict(BaseType, dict):
     def generate(self):
         self.val = {}
+        key_type = generateRandomType()
+        val_type = generateRandomType()
         for _ in range(random.randint(1, 10)):
-            self.val[generateRandomObject()] = generateRandomObject()
+            self.val[key_type()] = val_type()
 
 class Tuple(BaseType, tuple):
     def generate(self):
