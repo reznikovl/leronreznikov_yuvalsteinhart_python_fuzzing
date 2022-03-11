@@ -3,13 +3,14 @@
 # from pycallgraph3 import GlobbingFilter
 # from pycallgraph3.output import GraphvizOutput
 from FuzzerBase import FuzzerBase
-from utils import gen_cfg, to_graph, complex_1, rich_output, custom_types, type_wrappers, types
+from utils import complex_1, custom_types, type_wrappers, types
 from graphviz import Source, Digraph
 import inspect
 import ast
 from typing import *
 import random
 import datetime
+import time
 
 param_constraints = dict()
 out_of_consideration = set()
@@ -18,15 +19,17 @@ random.seed(datetime.datetime.now())
 
 class WhiteBoxFuzzer(FuzzerBase):
 
-    def __init__(self, func, name = ""):
-        self.function_ = func
-
-    def call_graph(self):
-        cfg = gen_cfg(inspect.getsource(self.function_))
-        to_graph(cfg)
+    def __init__(self, name = ""):
+        super().__init__(name)
+        # self.function_ = func
     
-    def fuzz(self, max_trials=100):
-        sig = inspect.signature(self.function_)
+    def fuzz(self, func, max_trials=100):
+        success = False
+        total_tries = 0
+        tries_until_success = 0
+        start_time = time.perf_counter()
+
+        sig = inspect.signature(func)
         n = len(sig.parameters)
         param_names = sig.parameters.keys()
         global param_constraints
@@ -35,7 +38,7 @@ class WhiteBoxFuzzer(FuzzerBase):
         out_of_consideration = set()
         for i in param_names:
             param_constraints[i] = []
-        src = inspect.getsource(self.function_)
+        src = inspect.getsource(func)
         func_ast = ast.parse(src)
         # print(ast.dump(func_ast))
 
@@ -50,8 +53,8 @@ class WhiteBoxFuzzer(FuzzerBase):
                     result[param].append(curr_type)
             if not result[param]:
                 #No default type has requirements
-                result[param] = constraints
-        # print(result)
+                # result[param] = constraints
+                pass
         attempted_combos = set()
         allowed_combos = set()
         # inp = [random.choice(result[i]) for i in sig.parameters]
@@ -64,10 +67,17 @@ class WhiteBoxFuzzer(FuzzerBase):
                     continue
                 self.function_(*(j() for j in inp))
                 allowed_combos.add(inp)
+                if not success:
+                    tries_until_success = total_tries
+                success = True
             except (TypeError, AttributeError):
                 attempted_combos.add(tuple(inp))
             except:
                 allowed_combos.add(inp)
+                if not success:
+                    tries_until_success = total_tries
+                success = True
+        self.record_fuzz(success, time.perf_counter() - start_time, tries_until_success, len(allowed_combos))
         return allowed_combos
 
         

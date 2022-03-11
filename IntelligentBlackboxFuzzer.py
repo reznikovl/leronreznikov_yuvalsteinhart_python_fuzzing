@@ -18,7 +18,6 @@ class IntelligentBlackboxFuzzer(FuzzerBase):
         total_tries = 0
         tries_until_success = 0
         start_time = time.perf_counter()
-        curr_try = 0
         sig = signature(func)
         n = len(sig.parameters)
 
