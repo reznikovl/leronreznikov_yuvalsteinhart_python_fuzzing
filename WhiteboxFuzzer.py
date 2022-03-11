@@ -65,7 +65,7 @@ class WhiteBoxFuzzer(FuzzerBase):
                 if inp in attempted_combos:
                     inp = tuple([random.choice(result[i]) for i in sig.parameters])
                     continue
-                self.function_(*(j() for j in inp))
+                func(*(j() for j in inp))
                 allowed_combos.add(inp)
                 if not success:
                     tries_until_success = total_tries

@@ -4,4 +4,4 @@ from WhiteboxFuzzer import WhiteBoxFuzzer
 
 
 # WhiteBoxFuzzer(complex_3).call_graph()
-print(WhiteBoxFuzzer(complex_2).fuzz())
+print(WhiteBoxFuzzer().fuzz(complex_2))
