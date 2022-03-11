@@ -53,22 +53,22 @@ class WhiteBoxFuzzer(FuzzerBase):
                 result[param] = constraints
         # print(result)
         attempted_combos = set()
+        allowed_combos = set()
         # inp = [random.choice(result[i]) for i in sig.parameters]
-        inp = [type_wrappers.Str]
         for i in range(max_trials):
             # print(inp)
             try:
+                inp = tuple([random.choice(result[i]) for i in sig.parameters])
                 if inp in attempted_combos:
                     inp = tuple([random.choice(result[i]) for i in sig.parameters])
                     continue
                 self.function_(*(j() for j in inp))
-                return inp
+                allowed_combos.add(inp)
             except (TypeError, AttributeError):
                 attempted_combos.add(tuple(inp))
-                inp = tuple([random.choice(result[i]) for i in sig.parameters])
             except:
-                return inp
-        return None
+                allowed_combos.add(inp)
+        return allowed_combos
 
         
         
@@ -99,14 +99,14 @@ class visitor(ast.NodeVisitor):
             pass
         return super().generic_visit(node)
     
-    def visit_Call(self, node: ast.Call) -> Any:
-        try:
-            param = node.args[0].id
-            if param in param_constraints and param not in out_of_consideration:
-                param_constraints[param].append(node.func.Name)
-        except:
-            pass
-        return super().generic_visit(node)
+    # def visit_Call(self, node: ast.Call) -> Any:
+    #     try:
+    #         param = node.args[0].id
+    #         if param in param_constraints and param not in out_of_consideration:
+    #             param_constraints[param].append(node.func.Name)
+    #     except:
+    #         pass
+    #     return super().generic_visit(node)
     
     def visit_Compare(self, node: ast.Compare) -> Any:
         try:
@@ -255,40 +255,3 @@ def unop_tostr(node):
         ast.Invert: "__invert__"
     }
     return ops[type(node)]
-
-
-    
-# def token_to_magic(tok):
-#     tokenizer = {
-#         '+': '__add__',
-#         'abs': '__abs__',
-#         'and': '__and__',
-#         'bool': '__bool__',
-#         'ceil': '__ceil__',
-#         'class': '__class__',
-#         'delattr': '__delattr__',
-#         'dir': '__dir__',
-#         'divmod': '__divmod__',
-#         'doc': '__doc__',
-#         '==': '__eq__',
-#         'float': '__float__',
-#         'floor': '__floor__',
-#         '//': '__floordiv__',
-#         'format': '__format__',
-#         '>=': '__ge__',
-#         'getattribute': '__getattribute__',
-#         '>': '__gt__',
-#         'hash': '__hash__',
-#         'index': '__index__',
-#         'int': '__int__',
-#         '~': '__invert__',
-#         '<=': '__le__',
-#         '<<': '__lshift__'.
-        
-#         'setattr': '__setattr__',
-#         'size_of': '__sizeof__',
-#         'str': '__str__'
-#         '-': '__sub__',
-#         'trunc': '__trunc__'
-#         '^': '__xor__'
-#     }

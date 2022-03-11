@@ -12,6 +12,7 @@ class IntelligentBlackboxFuzzer(FuzzerBase):
     """A much more intelligent version of the SimpleFuzzer - it tries to fuzz types based on the TypeError message content. (Blackbox)"""
     def __init__(self, name = ""):
         super().__init__(name)
+        
     def fuzz(self, func, max_trials = 1000):
         success = False
         total_tries = 0
