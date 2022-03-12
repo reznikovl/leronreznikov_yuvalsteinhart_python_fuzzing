@@ -21,20 +21,23 @@ white_box_title, white_box_fuzztime, white_box_successful_combos, white_box_trie
 
 labels = [simple_title, smart_title, white_box_title]
 
-# Fuzz time plot
+# Time Plot
 plt.boxplot([simple_fuzztime, smart_fuzztime, white_box_fuzztime], labels = labels)
 plt.ylabel('Time Taken (s)')
 plt.title('Time Taken Per Run')
 plt.show()
 
-# Fuzz Succesful Combos
+# Successful Combos Plot
 plt.boxplot([simple_successful_combos, smart_successful_combos, white_box_successful_combos], labels = labels)
 plt.ylabel("Combinations Generated Per Run")
 plt.title("Successful Combinations Generated")
 plt.show()
 
-# Fuzz Tries until Success
+# Tries until Success Plot
 plt.boxplot([simple_tries_until_success, smart_tries_until_success, white_box_tries_until_success], labels = labels)
 plt.ylabel("Tries Until Success")
 plt.title("Tries Until Success Per Successful Run")
 plt.show()
+
+# Also, can use built-in plot method to plot the individual fuzzer details for all fuzzers
+white_box.display_all_plots()

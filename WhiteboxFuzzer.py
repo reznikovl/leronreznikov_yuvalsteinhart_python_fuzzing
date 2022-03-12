@@ -1,9 +1,5 @@
-# from pycallgraph3 import PyCallGraph
-# from pycallgraph3 import Config
-# from pycallgraph3 import GlobbingFilter
-# from pycallgraph3.output import GraphvizOutput
 from FuzzerBase import FuzzerBase
-from utils import complex_1, custom_types, type_wrappers, types
+from utils import custom_types, type_wrappers, types
 from graphviz import Source, Digraph
 import inspect
 import ast
@@ -18,30 +14,32 @@ random.seed(datetime.datetime.now())
 
 
 class WhiteBoxFuzzer(FuzzerBase):
+    """A whitebox fuzzer that uses a function's AST to generate type constraints."""
 
     def __init__(self, name = ""):
         super().__init__(name)
-        # self.function_ = func
     
-    def fuzz(self, func, max_trials=100):
+    def fuzz(self, func, max_trials=1000):
+        global param_constraints
+        global out_of_consideration
         success = False
         total_tries = 0
         tries_until_success = 0
         start_time = time.perf_counter()
 
         sig = inspect.signature(func)
-        n = len(sig.parameters)
         param_names = sig.parameters.keys()
-        global param_constraints
-        global out_of_consideration
+        
         param_constraints = dict()
         out_of_consideration = set()
+        
+        # Initially, start with empty constraints
         for i in param_names:
             param_constraints[i] = []
         src = inspect.getsource(func)
         func_ast = ast.parse(src)
-        # print(ast.dump(func_ast))
 
+        # Generate the ast, and build the constraints
         visitor().visit(func_ast)
 
         # Need to ensure particular type combo actually works
@@ -50,16 +48,17 @@ class WhiteBoxFuzzer(FuzzerBase):
             result[param] = []
             for curr_type in custom_types():
                 if all([constraint in dir(curr_type) for constraint in constraints]):
+                    # Some default type matches the constraints!
                     result[param].append(curr_type)
             if not result[param]:
                 #No default type has requirements
-                # result[param] = constraints
-                pass
+                raise TypeError
+
         attempted_combos = set()
         allowed_combos = set()
-        # inp = [random.choice(result[i]) for i in sig.parameters]
+
+        #Similarly to our other fuzzers, we try all combinations until we find some that work.
         for i in range(max_trials):
-            # print(inp)
             try:
                 inp = tuple([random.choice(result[i]) for i in sig.parameters])
                 if inp in attempted_combos:
@@ -85,6 +84,9 @@ class WhiteBoxFuzzer(FuzzerBase):
         
 
 class visitor(ast.NodeVisitor):
+    """AST visitor. 
+    
+    For all "interesting" / constraint-generating nodes, we determine if it is a parameter, and if so add the constraints to the global dict"""
     def visit_Attribute(self, node: ast.Attribute) -> Any:
         param = node.value.id
         if param in param_constraints and param not in out_of_consideration:
@@ -108,15 +110,6 @@ class visitor(ast.NodeVisitor):
         except:
             pass
         return super().generic_visit(node)
-    
-    # def visit_Call(self, node: ast.Call) -> Any:
-    #     try:
-    #         param = node.args[0].id
-    #         if param in param_constraints and param not in out_of_consideration:
-    #             param_constraints[param].append(node.func.Name)
-    #     except:
-    #         pass
-    #     return super().generic_visit(node)
     
     def visit_Compare(self, node: ast.Compare) -> Any:
         try:
