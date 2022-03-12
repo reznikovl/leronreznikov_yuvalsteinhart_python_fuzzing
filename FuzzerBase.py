@@ -1,4 +1,3 @@
-from time import time
 import matplotlib.pyplot as plt
 class FuzzerBase():
     def __init__(self, name = ""):
@@ -39,11 +38,13 @@ class FuzzerBase():
         self.plot_successful_combos()
         self.plot_tries_until_success()
 
+    def dump_all_data(self):
+        """Returns a 4-tuple, where each entry is the fuzzer name, time_to_fuzz, successful_combos, and tries_until_success, respectively."""
+        return (self.fuzzer_name, self.time_to_fuzz, self.successful_combo_count, self.tries_until_success)       
 
     def plot_time_to_fuzz(self):
         """Plots the total time taken per fuzz attempt."""
         plt.title(self.fuzzer_name + " Time Taken Per Run")
-        # plt.xlabel('Attempt')
         plt.ylabel('Time Taken (s)')
         plt.boxplot(self.time_to_fuzz)
         plt.show()
